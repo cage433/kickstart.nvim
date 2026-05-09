@@ -958,7 +958,7 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
@@ -985,6 +985,20 @@ require('lazy').setup({
     },
   },
 })
+
+vim.keymap.set({ 'n', 'v' }, ';', ':', { desc = 'Enter command mode' })
+vim.keymap.set({ 'n', 'v' }, '`', ';', { desc = 'Repeat last f/t motion' })
+
+-- MULTIPURPOSE TAB KEY
+-- Indent if we're at the beginning of a line. Else, do completion.
+vim.keymap.set('i', '<Tab>', function()
+  local col = vim.fn.col('.') - 1
+  if col == 0 or vim.fn.match(vim.fn.getline('.'):sub(col, col), [[\k]]) == -1 then
+    return '<Tab>'
+  else
+    return '<C-p>'
+  end
+end, { expr = true })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
