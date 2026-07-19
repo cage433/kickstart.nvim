@@ -57,6 +57,7 @@ return {
 
       -- Debug controls (global; only fire once a session is running).
       vim.keymap.set('n', '<leader>dc', dap.continue, { desc = 'Debug: Start/[C]ontinue' })
+      vim.keymap.set('n', '<leader>dl', dap.run_last, { desc = 'Debug: Run [L]ast (re-run last test)' })
       vim.keymap.set('n', '<leader>db', dap.toggle_breakpoint, { desc = 'Debug: Toggle [B]reakpoint' })
       vim.keymap.set('n', '<leader>do', dap.step_over, { desc = 'Debug: Step [O]ver' })
       vim.keymap.set('n', '<leader>di', dap.step_into, { desc = 'Debug: Step [I]nto' })
