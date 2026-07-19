@@ -1021,6 +1021,15 @@ local function toggle_split()
 end
 vim.keymap.set('n', '<leader>ts', toggle_split, { desc = '[T]oggle [S]plit (auto orientation)' })
 
+-- Bind the traditional ctags tag-jump key to LSP go-to-definition (replaces the tags file).
+-- Buffer-local on LSP attach, so <C-]> keeps its default behaviour (help links, ctags) elsewhere.
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('custom-lsp-tagjump', { clear = true }),
+  callback = function(event)
+    vim.keymap.set('n', '<C-]>', require('telescope.builtin').lsp_definitions, { buffer = event.buf, desc = 'LSP: [G]oto [D]efinition (tag-jump)' })
+  end,
+})
+
 -- Non kickstarter config
 --
 -- MULTIPURPOSE TAB KEY
