@@ -987,6 +987,40 @@ require('lazy').setup({
 vim.keymap.set({ 'n', 'v' }, ';', ':', { desc = 'Enter command mode' })
 vim.keymap.set({ 'n', 'v' }, '`', ';', { desc = 'Repeat last f/t motion' })
 
+-- Ported from .vimrc: move by display lines with j/k, by real lines with gj/gk
+vim.keymap.set('n', 'j', 'gj', { desc = 'Move down by display line' })
+vim.keymap.set('n', 'k', 'gk', { desc = 'Move up by display line' })
+vim.keymap.set('n', 'gj', 'j', { desc = 'Move down by real line' })
+vim.keymap.set('n', 'gk', 'k', { desc = 'Move up by real line' })
+
+-- Ported from .vimrc: jump to the alternate (previously edited) buffer
+vim.keymap.set('n', '<leader>,', '<C-^>', { desc = 'Alternate buffer' })
+
+-- Ported from .vimrc: :s substitutes all matches on a line by default (no trailing /g needed)
+vim.o.gdefault = true
+
+-- Ported from .vimrc: no swapfiles (persistent undo is enabled instead)
+vim.o.swapfile = false
+
+-- Toggle line numbers
+vim.keymap.set('n', '<leader>tn', '<cmd>set invnumber<CR>', { desc = '[T]oggle line [N]umbers' })
+
+-- Ported from .vimrc: toggle between a single window and a split, orienting the
+-- split based on the terminal's shape (columns/lines). Cells are ~2:1 tall:wide,
+-- so columns > lines*3.0 means a landscape monitor -> side-by-side; else stacked.
+-- The 3.0 factor (rather than 2) keeps half-width panes, e.g. a side-by-side tmux
+-- pane on a landscape monitor, on the stacked side of the boundary.
+local function toggle_split()
+  if vim.fn.winnr('$') > 1 then
+    vim.cmd('only')
+  elseif vim.o.columns > vim.o.lines * 3.0 then
+    vim.cmd('vsplit')
+  else
+    vim.cmd('split')
+  end
+end
+vim.keymap.set('n', '<leader>ts', toggle_split, { desc = '[T]oggle [S]plit (auto orientation)' })
+
 -- Non kickstarter config
 --
 -- MULTIPURPOSE TAB KEY
