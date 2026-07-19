@@ -107,6 +107,10 @@ vim.o.number = true
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.o.mouse = 'a'
 
+-- Use true (24-bit) colour so colorschemes render their exact palette rather than a
+-- 256-colour approximation (which makes muted themes like Solarized look oversaturated).
+vim.o.termguicolors = true
+
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
 
@@ -863,7 +867,20 @@ require('lazy').setup({
     'maxmx03/solarized.nvim',
     priority = 1000,
     config = function()
-      require('solarized').setup { theme = 'neo' }
+      require('solarized').setup {
+        variant = 'autumn',
+        -- Monochrome code: collapse every syntax accent to the base foreground grey,
+        -- so colour isn't a distraction. Comments use a separate, dimmer grey and stay
+        -- dimmer. Diagnostics (errors/warnings) use separate palette entries and stay
+        -- vivid. `keep` is how much accent survives: 0 = grey, 1 = full Solarized colour.
+        on_colors = function(colors, color)
+          local keep = 0
+          for _, k in ipairs { 'blue', 'cyan', 'green', 'magenta', 'orange', 'red', 'violet', 'yellow' } do
+            colors[k] = color.blend(colors[k], colors.base0, keep)
+          end
+          return colors
+        end,
+      }
       vim.o.background = 'dark'
       vim.cmd.colorscheme 'solarized'
     end,
