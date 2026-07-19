@@ -40,6 +40,9 @@ return {
       metals_config.on_attach = function(_, bufnr)
         -- Register Metals' DAP configurations so run/test code lenses launch via nvim-dap.
         require('metals').setup_dap()
+        -- Enable automatic code-lens refresh for this buffer. Neovim manages the
+        -- refreshing (replaces the deprecated manual vim.lsp.codelens.refresh()).
+        vim.lsp.codelens.enable(true, { bufnr = bufnr })
         -- Run the test/main code lens under the cursor.
         vim.keymap.set('n', '<leader>dt', vim.lsp.codelens.run, { buffer = bufnr, desc = 'Debug: Run [T]est/main under cursor' })
       end
@@ -79,13 +82,6 @@ return {
         callback = function()
           require('metals').initialize_or_attach(metals_config)
         end,
-      })
-
-      -- Keep the test/run code lenses refreshed as you move around Scala buffers.
-      vim.api.nvim_create_autocmd({ 'BufEnter', 'CursorHold', 'InsertLeave' }, {
-        group = group,
-        pattern = { '*.scala', '*.sbt' },
-        callback = function() pcall(vim.lsp.codelens.refresh, { bufnr = 0 }) end,
       })
     end,
   },
