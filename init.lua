@@ -874,6 +874,26 @@ require('lazy').setup({
       ---@diagnostic disable-next-line: duplicate-set-field
       statusline.section_location = function() return '%2l:%-2v' end
 
+      -- Show just the filename + flags. mini's default uses the full absolute path,
+      -- which is unreadably long for deeply-nested files in a monorepo.
+      ---@diagnostic disable-next-line: duplicate-set-field
+      statusline.section_filename = function()
+        if vim.bo.buftype == 'terminal' then return '%t' end
+        return '%t%m%r'
+      end
+
+      -- Drop the file-info section (filetype/encoding/format/size) for source code,
+      -- where it's mostly noise. Other filetypes keep mini's default.
+      local default_fileinfo = statusline.section_fileinfo
+      local fileinfo_hidden_ft = {
+        python = true, scala = true, sbt = true, sh = true, bash = true, zsh = true, ruby = true,
+      }
+      ---@diagnostic disable-next-line: duplicate-set-field
+      statusline.section_fileinfo = function(args)
+        if fileinfo_hidden_ft[vim.bo.filetype] then return '' end
+        return default_fileinfo(args)
+      end
+
       -- ... and there is more!
       --  Check out: https://github.com/nvim-mini/mini.nvim
     end,
