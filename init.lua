@@ -197,6 +197,50 @@ vim.diagnostic.config {
   jump = { float = true },
 }
 
+-- Turn the whole statusline red while the last Metals COMPILE had errors, and restore
+-- it when a compile comes back clean. Driven by compile completion (LspProgress), not by
+-- on-type diagnostics, so transient errors while you're typing don't turn it red.
+do
+  local errored = false
+  local saved_hl = nil
+  local groups = {
+    'MiniStatuslineModeNormal', 'MiniStatuslineModeInsert', 'MiniStatuslineModeVisual',
+    'MiniStatuslineModeReplace', 'MiniStatuslineModeCommand', 'MiniStatuslineModeOther',
+    'MiniStatuslineDevinfo', 'MiniStatuslineFilename', 'MiniStatuslineFileinfo',
+  }
+  local function set_statusline_red(on)
+    if on and not saved_hl then
+      saved_hl = {}
+      for _, g in ipairs(groups) do saved_hl[g] = vim.api.nvim_get_hl(0, { name = g }) end
+      local red = vim.api.nvim_get_hl(0, { name = 'DiagnosticError' }).fg or 0xdc322f
+      for _, g in ipairs(groups) do vim.api.nvim_set_hl(0, g, { bg = red, fg = 0xffffff, bold = true }) end
+    elseif not on and saved_hl then
+      for _, g in ipairs(groups) do vim.api.nvim_set_hl(0, g, saved_hl[g]) end
+      saved_hl = nil
+    end
+    vim.cmd 'redrawstatus'
+  end
+  local timer = vim.uv.new_timer()
+  local function refresh()
+    local has_errors = (vim.diagnostic.count(nil)[vim.diagnostic.severity.ERROR] or 0) > 0
+    if has_errors == errored then return end
+    errored = has_errors
+    set_statusline_red(has_errors)
+  end
+  vim.api.nvim_create_autocmd('LspProgress', {
+    callback = function(args)
+      local d = args.data or {}
+      local client = d.client_id and vim.lsp.get_client_by_id(d.client_id)
+      if not client or client.name ~= 'metals' then return end
+      local params = d.params or d.result
+      local value = params and params.value
+      if not (value and value.kind == 'end') then return end
+      timer:stop()
+      timer:start(300, 0, vim.schedule_wrap(refresh))
+    end,
+  })
+end
+
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
@@ -893,6 +937,23 @@ require('lazy').setup({
         if fileinfo_hidden_ft[vim.bo.filetype] then return '' end
         return default_fileinfo(args)
       end
+
+      -- Workspace-wide diagnostic count (not just the current buffer), so errors in
+      -- files you don't have open -- e.g. subclasses failing to compile -- still show.
+      ---@diagnostic disable-next-line: duplicate-set-field
+      statusline.section_diagnostics = function()
+        local count = vim.diagnostic.count(nil)
+        local e = count[vim.diagnostic.severity.ERROR] or 0
+        local w = count[vim.diagnostic.severity.WARN] or 0
+        if e == 0 and w == 0 then return '' end
+        local parts = {}
+        if e > 0 then parts[#parts + 1] = 'E' .. e end
+        if w > 0 then parts[#parts + 1] = 'W' .. w end
+        return table.concat(parts, ' ')
+      end
+      vim.api.nvim_create_autocmd('DiagnosticChanged', {
+        callback = function() vim.cmd 'redrawstatus' end,
+      })
 
       -- ... and there is more!
       --  Check out: https://github.com/nvim-mini/mini.nvim
