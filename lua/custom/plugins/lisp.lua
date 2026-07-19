@@ -13,6 +13,16 @@ return {
     'cage433/nvlime',
     dependencies = { 'monkoose/parsley' },
     ft = { 'lisp' },
+    init = function()
+      -- Place nvlime's output/REPL pane by terminal orientation, mirroring the
+      -- toggle_split rule (see init.lua): side (right) when landscape-ish,
+      -- bottom when portrait. nvlime reads this once when it loads, so it
+      -- reflects the orientation at nvim startup (restart to re-evaluate).
+      local position = (vim.o.columns > vim.o.lines * 3.0) and 'right' or 'bottom'
+      vim.g.nvlime_config = vim.tbl_deep_extend('force', vim.g.nvlime_config or {}, {
+        main_window = { position = position },
+      })
+    end,
   },
 
   -- Structural (paredit) editing — slurp/barf/wrap/etc. Lisp is painful without it.
