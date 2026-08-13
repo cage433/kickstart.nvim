@@ -378,6 +378,7 @@ require('lazy').setup({
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
         { 'gr', group = 'LSP Actions', mode = { 'n' } },
+        { '<leader>?', desc = 'Open cheatsheet' },
       },
     },
   },
@@ -1118,6 +1119,23 @@ local function toggle_split()
   end
 end
 vim.keymap.set('n', '<leader>ts', toggle_split, { desc = '[T]oggle [S]plit (auto orientation)' })
+
+-- Personal cheatsheet: keybindings + per-language dev-setup notes, in plain markdown
+-- at ~/.config/nvim/cheatsheet.md. Opens the real (editable) file in a split, so
+-- appending a line and :w grows it. Orientation reuses the toggle_split rule above
+-- (columns > lines*3.0 -> side-by-side on landscape, else stacked).
+local function open_cheatsheet()
+  local path = vim.fn.stdpath('config') .. '/cheatsheet.md'
+  -- Reuse an already-open cheatsheet window if one exists; else make a split.
+  local bufnr = vim.fn.bufnr(path)
+  if bufnr ~= -1 and vim.fn.bufwinid(bufnr) ~= -1 then
+    vim.fn.win_gotoid(vim.fn.bufwinid(bufnr))
+    return
+  end
+  local cmd = (vim.o.columns > vim.o.lines * 3.0) and 'vsplit' or 'split'
+  vim.cmd(cmd .. ' ' .. vim.fn.fnameescape(path))
+end
+vim.keymap.set('n', '<leader>?', open_cheatsheet, { desc = 'Open [?] cheatsheet' })
 
 -- Bind the traditional ctags tag-jump key to LSP go-to-definition (replaces the tags file).
 -- Buffer-local on LSP attach, so <C-]> keeps its default behaviour (help links, ctags) elsewhere.
